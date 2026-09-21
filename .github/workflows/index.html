@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Insight Studio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <div>
+        <div class="brand"><span class="dot"></span> CSV Insight Studio</div>
+        <div class="subtitle">Upload a CSV. Get instant EDA, charts, and ML model evaluation.</div>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card">
+      <h2>1. Upload your CSV</h2>
+      <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id="upload-form">
+        <label class="upload-zone" id="drop-zone">
+          <div class="upload-icon">📊</div>
+          <div><strong>Click to browse</strong> or drag & drop a .csv file here</div>
+          <div class="file-name" id="file-name-display"></div>
+          <input type="file" name="file" id="file-input" accept=".csv" required>
+        </label>
+        <div style="text-align:center; margin-top: 22px;">
+          <button type="submit" class="btn">Analyze CSV</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>What you'll get</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="value">📈</div><div class="label">Distributions</div></div>
+        <div class="stat-box"><div class="value">🔥</div><div class="label">Correlation Heatmap</div></div>
+        <div class="stat-box"><div class="value">🧩</div><div class="label">Missing Values</div></div>
+        <div class="stat-box"><div class="value">🤖</div><div class="label">ML Model Training</div></div>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Once uploaded, you can also pick a target column and train regression or
+        classification models (Linear/Logistic Regression, Random Forest) with
+        full evaluation metrics — R², MAE, RMSE, Accuracy, Precision, Recall, F1.
+      </p>
+    </div>
+
+    <footer>CSV Insight Studio &mdash; built with Flask, Pandas, Matplotlib, Seaborn & scikit-learn</footer>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileNameDisplay = document.getElementById('file-name-display');
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileNameDisplay.textContent = "Selected: " + fileInput.files[0].name;
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        fileNameDisplay.textContent = "Selected: " + files[0].name;
+      }
+    });
+  </script>
+</body>
+</html>

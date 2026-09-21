@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results - CSV Insight Studio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <div>
+        <div class="brand"><span class="dot"></span> CSV Insight Studio</div>
+        <div class="subtitle">Analyzing: <strong>{{ filename }}</strong>
+          <span class="badge">{{ insights.shape[0] }} rows &times; {{ insights.shape[1] }} cols</span>
+        </div>
+      </div>
+      <form action="{{ url_for('reset') }}" method="post">
+        <button type="submit" class="btn secondary">Upload another file</button>
+      </form>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Overview -->
+    <div class="card">
+      <h2>Overview</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="value">{{ insights.shape[0] }}</div><div class="label">Rows</div></div>
+        <div class="stat-box"><div class="value">{{ insights.shape[1] }}</div><div class="label">Columns</div></div>
+        <div class="stat-box"><div class="value">{{ insights.numeric_cols|length }}</div><div class="label">Numeric</div></div>
+        <div class="stat-box"><div class="value">{{ insights.categorical_cols|length }}</div><div class="label">Categorical</div></div>
+        <div class="stat-box"><div class="value">{{ insights.missing|length }}</div><div class="label">Cols w/ Missing</div></div>
+        <div class="stat-box"><div class="value">{{ insights.duplicates }}</div><div class="label">Duplicate Rows</div></div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card">
+      <h2>Data Preview (first {{ insights.preview|length }} rows)</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>{% for col in insights.columns %}<th>{{ col }}</th>{% endfor %}</tr>
+          </thead>
+          <tbody>
+            {% for row in insights.preview %}
+            <tr>
+              {% for col in insights.columns %}<td>{{ row[col] }}</td>{% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Missing values -->
+    {% if insights.missing %}
+    <div class="card">
+      <h2>Missing Values</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Column</th><th>Missing Count</th><th>Missing %</th></tr></thead>
+          <tbody>
+            {% for m in insights.missing %}
+            <tr><td>{{ m.column }}</td><td>{{ m.missing }}</td><td>{{ m.pct }}%</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Summary statistics -->
+    {% if insights.describe %}
+    <div class="card">
+      <h2>Summary Statistics (numeric columns)</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Column</th><th>Count</th><th>Mean</th><th>Std</th><th>Min</th>
+              <th>25%</th><th>50%</th><th>75%</th><th>Max</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in insights.describe %}
+            <tr>
+              <td>{{ row.column }}</td>
+              <td>{{ row['count'] }}</td>
+              <td>{{ row['mean'] }}</td>
+              <td>{{ row['std'] }}</td>
+              <td>{{ row['min'] }}</td>
+              <td>{{ row['25%'] }}</td>
+              <td>{{ row['50%'] }}</td>
+              <td>{{ row['75%'] }}</td>
+              <td>{{ row['max'] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts -->
+    {% if insights.charts.correlation %}
+    <div class="card">
+      <h2>Correlation Heatmap</h2>
+      <img class="chart-img" src="data:image/png;base64,{{ insights.charts.correlation }}" alt="Correlation heatmap">
+    </div>
+    {% endif %}
+
+    {% if insights.charts.histograms %}
+    <div class="card">
+      <h2>Numeric Distributions</h2>
+      <img class="chart-img" src="data:image/png;base64,{{ insights.charts.histograms }}" alt="Histograms">
+    </div>
+    {% endif %}
+
+    {% if insights.charts.boxplots %}
+    <div class="card">
+      <h2>Outlier Check</h2>
+      <img class="chart-img" src="data:image/png;base64,{{ insights.charts.boxplots }}" alt="Boxplots">
+    </div>
+    {% endif %}
+
+    {% if insights.charts.categorical %}
+    <div class="card">
+      <h2>Top Categories</h2>
+      <img class="chart-img" src="data:image/png;base64,{{ insights.charts.categorical }}" alt="Categorical bar charts">
+    </div>
+    {% endif %}
+
+    <!-- ML Section -->
+    <div class="card">
+      <h2>Train a Machine Learning Model</h2>
+      <form action="{{ url_for('train') }}" method="post">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="target_col">Target Column</label>
+            <select name="target_col" id="target_col">
+              {% for col in ml_target_candidates %}
+                <option value="{{ col }}" {% if selected_target == col %}selected{% endif %}>{{ col }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task_type">Task Type</label>
+            <select name="task_type" id="task_type">
+              <option value="regression" {% if selected_task == 'regression' %}selected{% endif %}>Regression (predict a number)</option>
+              <option value="classification" {% if selected_task == 'classification' %}selected{% endif %}>Classification (predict a category)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 0;">
+            <button type="submit" class="btn">Train Models</button>
+          </div>
+        </div>
+      </form>
+
+      {% if ml_error %}
+        <div class="flash">{{ ml_error }}</div>
+      {% endif %}
+
+      {% if ml_results %}
+        <h3 style="margin-top: 24px;">Results &mdash; {{ ml_results.task_type|capitalize }}</h3>
+        {% for model in ml_results.models %}
+        <div class="model-card">
+          <h4>{{ model.name }}</h4>
+          <div class="metric-row">
+            {% for key, val in model.metrics.items() %}
+              <div class="metric"><span class="m-label">{{ key }}:</span><strong>{{ val }}</strong></div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+
+        {% if ml_results.chart %}
+        <div style="margin-top: 18px;">
+          <img class="chart-img" src="data:image/png;base64,{{ ml_results.chart }}" alt="Model evaluation chart">
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <footer>CSV Insight Studio &mdash; built with Flask, Pandas, Matplotlib, Seaborn & scikit-learn</footer>
+  </div>
+</body>
+</html>
