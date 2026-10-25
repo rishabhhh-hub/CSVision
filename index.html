@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSVision — CSV Data Insights & ML Platform</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">📊</span>
+        <div>
+          <div class="brand-name">CSVision</div>
+          <div class="brand-sub">Explore your data. Discover insights. Build models.</div>
+        </div>
+      </div>
+      <div class="header-file" id="header-file" style="display:none">
+        <span class="file-chip" id="header-filename"></span>
+        <button class="btn btn-sm btn-outline" id="btn-reset">✕ Remove File</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main-wrap">
+
+    <!-- ── Upload section ── -->
+    <section class="upload-section" id="upload-section">
+      <div class="upload-card">
+        <div class="upload-icon">📂</div>
+        <h2>Upload your CSV file</h2>
+        <p>Drag & drop a file here, or click the button below to browse.</p>
+        <div class="drop-zone" id="drop-zone">
+          <span class="drop-label" id="drop-label">Drop CSV here</span>
+        </div>
+        <label class="btn btn-primary btn-lg" for="file-input">
+          Choose CSV File
+        </label>
+        <input type="file" id="file-input" accept=".csv" hidden />
+        <div class="upload-info" id="upload-info" style="display:none">
+          <span id="upload-filename"></span>
+          <span id="upload-size"></span>
+        </div>
+        <div class="upload-error" id="upload-error" style="display:none"></div>
+        <div class="loading-bar" id="upload-loading" style="display:none">
+          <div class="loading-bar-inner"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Dashboard (shown after upload) ── -->
+    <section class="dashboard" id="dashboard" style="display:none">
+
+      <!-- Stat cards row -->
+      <div class="stat-cards" id="stat-cards"></div>
+
+      <!-- Tab nav -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="insights">Data Insights</button>
+        <button class="tab-btn" data-tab="visualizations">Visualizations</button>
+        <button class="tab-btn" data-tab="ml">Machine Learning</button>
+        <button class="tab-btn" data-tab="predictions">Predictions</button>
+      </nav>
+
+      <!-- ── Tab: Overview ── -->
+      <div class="tab-panel active" id="tab-overview">
+        <div class="panel-header">
+          <h3>Dataset Preview</h3>
+          <div class="row-selector">
+            Show
+            <select id="preview-rows" class="select-sm">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+            rows
+          </div>
+        </div>
+        <div class="table-scroll" id="preview-table-wrap"></div>
+        <p class="muted" id="preview-meta"></p>
+
+        <div class="section-title">Auto-generated Charts</div>
+        <div class="chart-grid" id="auto-charts"></div>
+      </div>
+
+      <!-- ── Tab: Insights ── -->
+      <div class="tab-panel" id="tab-insights">
+        <div class="insight-bullets card" id="insight-bullets"></div>
+
+        <div class="two-col">
+          <div>
+            <div class="section-title">Descriptive Statistics</div>
+            <div class="table-scroll" id="describe-table"></div>
+          </div>
+          <div>
+            <div class="section-title">Missing Values</div>
+            <div id="missing-table"></div>
+            <div class="section-title" style="margin-top:1.5rem">Categorical Summary</div>
+            <div id="cat-summary"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Visualizations ── -->
+      <div class="tab-panel" id="tab-visualizations">
+        <div class="viz-controls card">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Chart Type</label>
+              <select id="viz-chart-type" class="select-input">
+                <option value="histogram">Histogram</option>
+                <option value="boxplot">Box Plot</option>
+                <option value="scatter">Scatter Plot</option>
+                <option value="correlation">Correlation Heatmap</option>
+                <option value="line">Line Chart</option>
+                <option value="count_plot">Count Plot (categorical)</option>
+                <option value="bar_chart">Bar Chart</option>
+              </select>
+            </div>
+            <div class="form-group" id="viz-col-wrap">
+              <label id="viz-col-label">Column</label>
+              <select id="viz-column" class="select-input"></select>
+            </div>
+            <div class="form-group hidden" id="viz-y-wrap">
+              <label>Y Column</label>
+              <select id="viz-y-col" class="select-input"></select>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-generate-chart">Generate Chart</button>
+        </div>
+        <div class="chart-display" id="chart-display"></div>
+      </div>
+
+      <!-- ── Tab: Machine Learning ── -->
+      <div class="tab-panel" id="tab-ml">
+        <div class="ml-form card">
+          <div class="section-title">Model Configuration</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Target Column</label>
+              <select id="ml-target" class="select-input"></select>
+            </div>
+            <div class="form-group">
+              <label>Task Type</label>
+              <select id="ml-task" class="select-input">
+                <option value="classification">Classification</option>
+                <option value="regression">Regression</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Algorithm</label>
+              <select id="ml-algo" class="select-input"></select>
+            </div>
+            <div class="form-group">
+              <label>Test Set Size</label>
+              <select id="ml-split" class="select-input">
+                <option value="0.1">10%</option>
+                <option value="0.2" selected>20%</option>
+                <option value="0.3">30%</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg" id="btn-train">Train Model</button>
+          <div class="loading-bar" id="train-loading" style="display:none">
+            <div class="loading-bar-inner"></div>
+          </div>
+          <div class="error-msg" id="train-error" style="display:none"></div>
+        </div>
+
+        <div id="ml-results" style="display:none">
+          <div class="section-title" id="ml-result-title"></div>
+          <div class="metric-cards" id="metric-cards"></div>
+          <div class="split-info" id="split-info"></div>
+          <div class="chart-display" id="ml-chart"></div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Predictions ── -->
+      <div class="tab-panel" id="tab-predictions">
+        <div id="pred-no-model" class="info-box">
+          ℹ️ Please train a model on the <strong>Machine Learning</strong> tab first.
+        </div>
+        <div id="pred-form-section" style="display:none">
+          <div class="card">
+            <div class="section-title">Enter Feature Values</div>
+            <div class="pred-form" id="pred-form"></div>
+            <button class="btn btn-primary btn-lg" id="btn-predict">Predict</button>
+            <div class="error-msg" id="pred-error" style="display:none"></div>
+          </div>
+          <div class="pred-result card" id="pred-result" style="display:none">
+            <div class="pred-result-label">Prediction Result</div>
+            <div class="pred-result-value" id="pred-result-value"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>CSVision &mdash; Built with Flask, Pandas, Scikit-learn, Matplotlib &amp; Seaborn</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
